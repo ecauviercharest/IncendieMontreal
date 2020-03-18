@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/IncendieMontreal" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>

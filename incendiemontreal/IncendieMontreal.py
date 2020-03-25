@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog
 from qgis.core import QgsProject
 
 # Initialize Qt resources from file resources.py
@@ -181,6 +181,14 @@ class IncendieMontreal:
             self.iface.removeToolBarIcon(action)
 
 
+    def select_input_file(self):
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select   input file ", "", '*.shp')
+        # Fais référence à une ligne en particulier. doit pouvoir être indépendant du nom de widget. rajouter un
+        # paramètre à la méthode
+        self.dlg.label_spat.setText(filename)
+
+
     def run(self):
         """Run method that performs all the real work"""
 
@@ -189,6 +197,7 @@ class IncendieMontreal:
         if self.first_start == True:
             self.first_start = False
             self.dlg = IncendieMontrealDialog()
+            self.dlg.toolButton_spat.clicked.connect(self.select_input_file)
 
         # Fetch the currently loaded layers
         layers = QgsProject.instance().layerTreeRoot().children()

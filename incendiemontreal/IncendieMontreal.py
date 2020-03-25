@@ -24,6 +24,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import QgsProject
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -188,6 +189,13 @@ class IncendieMontreal:
         if self.first_start == True:
             self.first_start = False
             self.dlg = IncendieMontrealDialog()
+
+        # Fetch the currently loaded layers
+        layers = QgsProject.instance().layerTreeRoot().children()
+        # Clear the contents of the comboBox from previous runs
+        self.dlg.comboBox_recens_spat.clear()
+        # Populate the comboBox with names of all the loaded layers
+        self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
 
         # show the dialog
         self.dlg.show()

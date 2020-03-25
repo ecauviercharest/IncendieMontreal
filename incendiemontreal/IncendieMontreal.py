@@ -180,13 +180,11 @@ class IncendieMontreal:
                 action)
             self.iface.removeToolBarIcon(action)
 
-
+    # Pas fonctionnel. Le combobox n'a pas d'attribut setText. Il faut trouver une facon d'input un path dans combobox
     def select_input_file(self):
         filename, _filter = QFileDialog.getOpenFileName(
             self.dlg, "Select   input file ", "", '*.shp')
-        # Fais référence à une ligne en particulier. doit pouvoir être indépendant du nom de widget. rajouter un
-        # paramètre à la méthode
-        self.dlg.label_spat.setText(filename)
+        self.dlg.comboBox_recens_spat.setText(filename)
 
 
     def run(self):
@@ -212,6 +210,9 @@ class IncendieMontreal:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+
+            # Faire le buffer sur la couche point
+
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass

@@ -206,7 +206,12 @@ class IncendieMontreal:
         if self.first_start == True:
             self.first_start = False
             self.dlg = IncendieMontrealDialog()
-            self.dlg.toolButton_spat.clicked.connect(self.select_input_file)
+
+        # On appelle la fonction select_input_file si le bouton toolButton_spat est cliqué
+        self.dlg.toolButton_spat.clicked.connect(self.select_input_file)
+        # On appelle la fonction select_output_file si le bouton toolButton_sortie est cliqué
+        self.dlg.toolButton_sortie.clicked.connect(self.select_output_file)
+
 
         # Fetch the currently loaded layers
         layers = QgsProject.instance().layerTreeRoot().children()

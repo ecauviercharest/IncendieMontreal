@@ -24,7 +24,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-from qgis.core import QgsProject
+from qgis.core import QgsProject, QgsMapLayer
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -219,6 +219,7 @@ class IncendieMontreal:
         self.dlg.comboBox_recens_spat.clear()
         # Populate the comboBox with names of all the loaded layers
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
+        self.dlg.comboBox_point.addItems([layer.name() for layer in layers])
 
         # show the dialog
         self.dlg.show()
@@ -226,6 +227,23 @@ class IncendieMontreal:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+
+            # Récupération des données en entrées
+
+            taille_buffer = self.dlg.lineEdit_buffer.text()
+            output_name = self.dlg.Line_sortie.text()
+            recens_text = self.dlg.Line_recens_text.text()
+
+            point_name = self.dlg.comboBox_point.currentText()
+            recens_spat_name = self.dlg.comboBox_recens_spat.currentText()
+            adresse_name = self.dlg.comboBox_adresse.currentText()
+            route_name = self.dlg.comboBox_route.currentText()
+
+            couche_point = QgsProject.instance().mapLayersByName(point_name)
+            couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
+            couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
+            couche_route = QgsProject.instance().mapLayersByName(route_name)
+
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

@@ -104,7 +104,7 @@
     <number>24</number>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_recens_text">
+  <widget class="QLineEdit" name="Line_recens_text">
    <property name="geometry">
     <rect>
      <x>30</x>

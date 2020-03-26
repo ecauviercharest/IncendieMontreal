@@ -159,7 +159,7 @@
      <string>Dossier</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_sortie">
+   <widget class="QLineEdit" name="Line_sortie">
     <property name="geometry">
      <rect>
       <x>20</x>

@@ -192,6 +192,12 @@ class IncendieMontreal:
         self.dlg.comboBox_recens_spat.setCurrentIndex(index)
 
 
+    def select_recens_text(self):
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select CSV file ", "", '*.csv')
+        self.dlg.Line_recens_text.setText(filename)
+
+
     def select_output_file(self):
         filename, _filter = QFileDialog.getSaveFileName(
             self.dlg, "Select   output file ", "", '*.txt')
@@ -211,6 +217,8 @@ class IncendieMontreal:
         self.dlg.toolButton_spat.clicked.connect(self.select_input_file)
         # On appelle la fonction select_output_file si le bouton toolButton_sortie est cliqué
         self.dlg.toolButton_sortie.clicked.connect(self.select_output_file)
+        # On appelle la fonction select_recens_text si le bouton toolButton_text est cliqué
+        self.dlg.toolButton_text.clicked.connect(self.select_recens_text)
 
 
         # Aller chercher toutes les couches présentement dans le projet

@@ -242,6 +242,7 @@ class IncendieMontreal:
             #   - on affiche la population totale affectée en haut du fichier
             #   - on affiche une rue
             #   - on affiche toutes les adresses affectées dans la rue
+            # 6. Sauvegarde du fichier dans le répertoire spécifié
 
             # Do something useful here - delete the line containing pass and
             # substitute with your code.

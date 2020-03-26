@@ -213,13 +213,21 @@ class IncendieMontreal:
         self.dlg.toolButton_sortie.clicked.connect(self.select_output_file)
 
 
-        # Fetch the currently loaded layers
+        # Aller chercher toutes les couches présentement dans le projet
         layers = QgsProject.instance().layerTreeRoot().children()
         # Clear the contents of the comboBox from previous runs
         self.dlg.comboBox_recens_spat.clear()
         # Populate the comboBox with names of all the loaded layers
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
+
+        self.dlg.comboBox_point.clear()
         self.dlg.comboBox_point.addItems([layer.name() for layer in layers])
+
+        self.dlg.comboBox_adresse.clear()
+        self.dlg.comboBox_adresse.addItems([layer.name() for layer in layers])
+
+        self.dlg.comboBox_route.clear()
+        self.dlg.comboBox_route.addItems([layer.name() for layer in layers])
 
         # show the dialog
         self.dlg.show()

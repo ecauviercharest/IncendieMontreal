@@ -180,11 +180,22 @@ class IncendieMontreal:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    # Pas fonctionnel. Le combobox n'a pas d'attribut setText. Il faut trouver une facon d'input un path dans combobox
+
     def select_input_file(self):
         filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select   input file ", "", '*.shp')
-        self.dlg.comboBox_recens_spat.setText(filename)
+            self.dlg, "Select input file ", "", '*.shp')
+        # Add the selected filename to combobox
+        self.dlg.comboBox_recens_spat.addItem(filename)
+        # Obtain index of newly-added item
+        index = self.dlg.comboBox_recens_spat.findText(filename)
+        # Set the combobox to select the new item
+        self.dlg.comboBox_recens_spat.setCurrentIndex(index)
+
+
+    def select_output_file(self):
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select   output file ", "", '*.txt')
+        self.dlg.line_sortie.setText(filename)
 
 
     def run(self):
@@ -211,7 +222,21 @@ class IncendieMontreal:
         # See if OK was pressed
         if result:
 
-            # Faire le buffer sur la couche point
+            # 1. Faire le buffer sur la couche point
+            # 2. Comptabiliser la population totale
+            #   2.1 Faire une requête dans le CSV des AD avec les ID des AD à l'intérieur du buffer
+            #   2.2 Extraire la population, faire le total
+            # 3. Faire la liste des rues affectées
+            #   3.1 Faire une requête dans la couche des rues, ceux qui sont contenues dans le buffer
+            #   3.2 Ajouter les noms de rue à une liste
+            # 4. Faire un dictionnaire des adresses affectées
+            #   4.1 Faire une requête dans la couche des adresses, ceux qui sont contenues dans le buffer
+            #   4.2 Ajouter les adresses comme key au dict.
+            #   4.3 Extraire le nom de la rue et l'ajouter comme valeur au dictionnaire
+            # 5. Formatage du fichier txt en sortie
+            #   - on affiche la population totale affectée en haut du fichier
+            #   - on affiche une rue
+            #   - on affiche toutes les adresses affectées dans la rue
 
             # Do something useful here - delete the line containing pass and
             # substitute with your code.

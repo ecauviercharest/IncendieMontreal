@@ -269,8 +269,8 @@ class IncendieMontreal:
             crs = layer.sourceCrs()
 
             # création de la couche vectorielle
-            vl = QgsVectorLayer("Polygon?crs=epsg:3347", "Zone_incident", "memory")
-            pr = vl.dataProvider()
+            buffer = QgsVectorLayer("Polygon?crs=epsg:3347", "Zone_incident", "memory")
+            pr = buffer.dataProvider()
 
             # Création du buffer
             for feat in feats:
@@ -278,9 +278,32 @@ class IncendieMontreal:
                 buff = geom.buffer(int(taille_buffer), 5)
                 feat.setGeometry(buff)
                 pr.addFeature(feat)
-            vl.updateExtents()
+            buffer.updateExtents()
             # Ajout de la couche à Qgis
-            QgsProject.instance().addMapLayer(vl)
+            QgsProject.instance().addMapLayer(buffer)
+
+
+        # faire la liste des AD affectés
+            # Déclarer la couche des AD
+            ad = couche_recens[0]
+            # Déclarer les features de la couche de buffer et de AD
+            zone_feature = buffer.getFeatures()
+            ad_features = ad.getFeatures()
+
+            liste_intersect = []
+
+            # On parcours les entités de couche de buffer et on déclare leur géométrie
+            for zone in zone_feature:
+                geom_zone = zone.geometry()
+                # On parcours les entités de la couche de AD et on déclare leur géométrie
+                for ads in ad_features:
+                    geom_ad = ads.geometry()
+                    # Si la géométrie du AD intersecte celle du buffer, on ajoute son ID à la liste_intersect
+                    if geom_ad.intersects(geom_zone):
+                        liste_intersect.append(ads['ADIDU'])
+            print(liste_intersect)
+            print(len(liste_intersect))
+
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

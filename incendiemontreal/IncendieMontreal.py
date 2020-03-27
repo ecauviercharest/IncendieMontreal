@@ -304,6 +304,27 @@ class IncendieMontreal:
             print(liste_intersect)
             print(len(liste_intersect))
 
+        # Aller chercher la population totale affectée dans le CSV en entrée
+            import csv
+            path_csv = r'{}'.format(recens_text)
+
+            dic_pop = {}
+            # on ouvre le fichier CSV des AD e spécifiant l'encodage à ISO-8859-1 pour gérer les caractères spéciaux
+            with open(path_csv, encoding='ISO-8859-1') as csv_file:
+                # On crée le reader qui va permettre de parcourir les row comme des dictionnaires
+                csv_reader = csv.DictReader(csv_file)
+                # On parcours chaque row du fichier
+                for row in csv_reader:
+                    for i in liste_intersect:
+                        # Si le ID du row égal un ID dans la liste des AD affectées, on ajoute la pop. du row
+                        # avec son ID au dictionnaire
+                        if row['ADidu'] == i:
+                            dic_pop.update({i: int(row['ADpop_2016'])})
+            print(dic_pop)
+            # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
+            pop_totale = sum(dic_pop.values())
+            print('La population totale affectée est de : {} personnes'.format(pop_totale))
+
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

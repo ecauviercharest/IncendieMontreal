@@ -24,7 +24,8 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-from qgis.core import QgsProject, QgsMapLayer
+from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes
+
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -255,11 +256,31 @@ class IncendieMontreal:
             adresse_name = self.dlg.comboBox_adresse.currentText()
             route_name = self.dlg.comboBox_route.currentText()
 
+            # Couches en assumant qu'elles sont ouvertes dans le projet
             couche_point = QgsProject.instance().mapLayersByName(point_name)
             couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
             couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
             couche_route = QgsProject.instance().mapLayersByName(route_name)
 
+
+        # Buffer sur le point en entrée
+            layer = couche_point[0]
+            feats = layer.getFeatures()
+            crs = layer.sourceCrs()
+
+            # création de la couche vectorielle
+            vl = QgsVectorLayer("Polygon?crs=epsg:3347", "Zone_incident", "memory")
+            pr = vl.dataProvider()
+
+            # Création du buffer
+            for feat in feats:
+                geom = feat.geometry()
+                buff = geom.buffer(int(taille_buffer), 5)
+                feat.setGeometry(buff)
+                pr.addFeature(feat)
+            vl.updateExtents()
+            # Ajout de la couche à Qgis
+            QgsProject.instance().addMapLayer(vl)
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

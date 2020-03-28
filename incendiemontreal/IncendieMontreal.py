@@ -249,8 +249,8 @@ class IncendieMontreal:
 
         # Récupération des informations générales du projet
 
-            crs = QgsProject.instance().crs()
-            epsg = str(crs).split(':')[2][:-1]
+            projCrs = QgsProject.instance().crs()
+            projEpsg = str(projCrs).split(':')[2][:-1]
 
         # Récupération des données en entrées
 
@@ -275,29 +275,48 @@ class IncendieMontreal:
 
         # Reprojection des couches selon le CRS du projet
             def reprojectToInstanceCrs(couche_vec, type, outCrs, outName):
+                # Définition du CRS de la couche
                 inCrs = couche_vec.crs()
+                # Extraction du code EPSG du CRS du projet
                 outEpsg = str(outCrs).split(':')[2][:-1]
+                # Création d'un objet QgsCoordinateTransform
                 trans = QgsCoordinateTransform(inCrs, outCrs, QgsProject.instance())
+                # Création de la couche de sortie et de son provider
                 outputLayer = QgsVectorLayer('{}?crs=epsg:{}'.format(type, outEpsg), outName, 'memory')
                 pr = outputLayer.dataProvider()
+                # Déclaration des variables contenant les entités et les attributs de la couche en entrée
                 couche_features = couche_vec.getFeatures()
                 couche_fields = couche_vec.fields()
 
+                # On copie les attributs de la couche en entrée dans la couche de sortie
+                pr.addAttributes(couche_fields)
+                outputLayer.updateFields()
+
+                # parcours les entité de la couche en entrée
                 for feature in couche_features:
                     geom = feature.geometry()
+                    # reprojection du geom de l'entité
                     geom.transform(trans)
+                    # On ajuste le geom de l'entité et on l'ajoute à la couche de sortie
                     feature.setGeometry(geom)
-                    feature.setAttributes(couche_fields)
                     pr.addFeature(feature)
 
-                #outputLayer.updateExtents()
+                # On met la couche de sortie à niveau
+                outputLayer.updateExtents()
+                # On affiche la couche dans le projet courant QGIS
                 QgsProject.instance().addMapLayer(outputLayer)
+                # Retourne la couche de sortie
                 return outputLayer
 
-            reprojectToInstanceCrs(couche_route, 'MultiLineString', crs, 'routes_reproj')
-            #liste_couches = [couche_recens, couche_route, couche_point, couche_adresse]
-            # for couche in liste_couches:
-            #     if
+            # Pour chaque couche en entrée du plugin, on reprojette si le CRS n'est pas celui du projet courant
+            if couche_recens.crs() != projCrs:
+                couche_recens = reprojectToInstanceCrs(couche_recens, 'Polygon', projCrs, 'recens_reproj')
+            if couche_route.crs() != projCrs:
+                couche_route = reprojectToInstanceCrs(couche_route, 'MultiLineString', projCrs, 'route_reproj')
+            if couche_adresse.crs() != projCrs:
+                couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
+            if couche_point.crs() != projCrs:
+                couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
 
 
         # Buffer sur le point en entrée
@@ -305,7 +324,7 @@ class IncendieMontreal:
             feats = layer.getFeatures()
 
             # création de la couche vectorielle
-            buffer = QgsVectorLayer("Polygon?crs=epsg:{}".format(epsg), "Zone_incident", "memory")
+            buffer = QgsVectorLayer("Polygon?crs=epsg:{}".format(projEpsg), "Zone_incident", "memory")
             pr = buffer.dataProvider()
 
             # Création du buffer

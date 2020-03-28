@@ -24,8 +24,8 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes
-
+from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform
+import processing
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -238,6 +238,8 @@ class IncendieMontreal:
         self.dlg.comboBox_route.clear()
         self.dlg.comboBox_route.addItems([layer.name() for layer in layers])
 
+        self.dlg.Line_recens_text.clear()
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -245,7 +247,12 @@ class IncendieMontreal:
         # See if OK was pressed
         if result:
 
-            # Récupération des données en entrées
+        # Récupération des informations générales du projet
+
+            crs = QgsProject.instance().crs()
+            epsg = str(crs).split(':')[2][:-1]
+
+        # Récupération des données en entrées
 
             taille_buffer = self.dlg.lineEdit_buffer.text()
             output_name = self.dlg.Line_sortie.text()
@@ -257,19 +264,48 @@ class IncendieMontreal:
             route_name = self.dlg.comboBox_route.currentText()
 
             # Couches en assumant qu'elles sont ouvertes dans le projet
-            couche_point = QgsProject.instance().mapLayersByName(point_name)
-            couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
-            couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
-            couche_route = QgsProject.instance().mapLayersByName(route_name)
+            liste_couche_point = QgsProject.instance().mapLayersByName(point_name)
+            couche_point = liste_couche_point[0]
+            liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
+            couche_recens = liste_couche_recens[0]
+            liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
+            couche_adresse = liste_couche_adresse[0]
+            liste_couche_route = QgsProject.instance().mapLayersByName(route_name)
+            couche_route = liste_couche_route[0]
+
+        # Reprojection des couches selon le CRS du projet
+            def reprojectToInstanceCrs(couche_vec, type, outCrs, outName):
+                inCrs = couche_vec.crs()
+                outEpsg = str(outCrs).split(':')[2][:-1]
+                trans = QgsCoordinateTransform(inCrs, outCrs, QgsProject.instance())
+                outputLayer = QgsVectorLayer('{}?crs=epsg:{}'.format(type, outEpsg), outName, 'memory')
+                pr = outputLayer.dataProvider()
+                couche_features = couche_vec.getFeatures()
+                couche_fields = couche_vec.fields()
+
+                for feature in couche_features:
+                    geom = feature.geometry()
+                    geom.transform(trans)
+                    feature.setGeometry(geom)
+                    feature.setAttributes(couche_fields)
+                    pr.addFeature(feature)
+
+                #outputLayer.updateExtents()
+                QgsProject.instance().addMapLayer(outputLayer)
+                return outputLayer
+
+            reprojectToInstanceCrs(couche_route, 'MultiLineString', crs, 'routes_reproj')
+            #liste_couches = [couche_recens, couche_route, couche_point, couche_adresse]
+            # for couche in liste_couches:
+            #     if
 
 
         # Buffer sur le point en entrée
-            layer = couche_point[0]
+            layer = couche_point
             feats = layer.getFeatures()
-            crs = layer.sourceCrs()
 
             # création de la couche vectorielle
-            buffer = QgsVectorLayer("Polygon?crs=epsg:3347", "Zone_incident", "memory")
+            buffer = QgsVectorLayer("Polygon?crs=epsg:{}".format(epsg), "Zone_incident", "memory")
             pr = buffer.dataProvider()
 
             # Création du buffer
@@ -282,27 +318,32 @@ class IncendieMontreal:
             # Ajout de la couche à Qgis
             QgsProject.instance().addMapLayer(buffer)
 
+        # Fonction pour faire la liste des entités d'une couche qui intersect une couche de buffer
+            def entite_intersect_buffer(couche_buffer, couche_vec, attribut_a_garder):
+                couche = couche_vec
+                # Déclarer les features de la couche de buffer et d'entité
+                buff_feature = couche_buffer.getFeatures()
+                couche_feature = couche.getFeatures()
 
-        # faire la liste des AD affectés
-            # Déclarer la couche des AD
-            ad = couche_recens[0]
-            # Déclarer les features de la couche de buffer et de AD
-            zone_feature = buffer.getFeatures()
-            ad_features = ad.getFeatures()
+                liste_intersect = []
+                for buff in buff_feature:
+                    geom_buff = buff.geometry()
+                    # On parcours les entités de la couche vec et on déclare leur géométrie
+                    for entite in couche_feature:
+                        geom_entite = entite.geometry()
+                        # Si l'entite intersect le buffer, ajoute les attributs voulus au dic, ajoute le dic à la liste
+                        if geom_entite.intersects(geom_buff):
+                            dic = {}
+                            for attribut in attribut_a_garder:
+                                value = entite[attribut]
+                                dic.update({attribut: value})
+                            liste_intersect.append(dic)
+                # retourne liste d'entités sous forme de dic avec les attributs voulus de l'entité
+                return liste_intersect
 
-            liste_intersect = []
-
-            # On parcours les entités de couche de buffer et on déclare leur géométrie
-            for zone in zone_feature:
-                geom_zone = zone.geometry()
-                # On parcours les entités de la couche de AD et on déclare leur géométrie
-                for ads in ad_features:
-                    geom_ad = ads.geometry()
-                    # Si la géométrie du AD intersecte celle du buffer, on ajoute son ID à la liste_intersect
-                    if geom_ad.intersects(geom_zone):
-                        liste_intersect.append(ads['ADIDU'])
-            print(liste_intersect)
-            print(len(liste_intersect))
+        # Aller chercher les AD qui sont affectées
+            ad_affectee = entite_intersect_buffer(buffer, couche_recens, ['ADIDU'])
+            print(ad_affectee)
 
         # Aller chercher la population totale affectée dans le CSV en entrée
             import csv
@@ -315,16 +356,20 @@ class IncendieMontreal:
                 csv_reader = csv.DictReader(csv_file)
                 # On parcours chaque row du fichier
                 for row in csv_reader:
-                    for i in liste_intersect:
-                        # Si le ID du row égal un ID dans la liste des AD affectées, on ajoute la pop. du row
-                        # avec son ID au dictionnaire
-                        if row['ADidu'] == i:
-                            dic_pop.update({i: int(row['ADpop_2016'])})
+                    for i in ad_affectee:
+                        for j in i.values():
+                            # Si le ID du row égal un ID dans la liste des AD affectées, on ajoute la pop. du row
+                            # avec son ID au dictionnaire
+                            if row['ADidu'] == j:
+                                dic_pop.update({j: int(row['ADpop_2016'])})
             print(dic_pop)
             # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
             pop_totale = sum(dic_pop.values())
             print('La population totale affectée est de : {} personnes'.format(pop_totale))
 
+        # Aller chercher les rues qui sont affectées
+        #     rue_affectee = entite_intersect_buffer(buffer, couche_route, ['ID_TRC', 'CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
+        #     print(rue_affectee)
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

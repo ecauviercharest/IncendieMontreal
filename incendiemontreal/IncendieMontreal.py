@@ -24,7 +24,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform
+from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform, QgsDistanceArea
 import processing
 
 # Initialize Qt resources from file resources.py
@@ -304,7 +304,7 @@ class IncendieMontreal:
                 # On met la couche de sortie à niveau
                 outputLayer.updateExtents()
                 # On affiche la couche dans le projet courant QGIS
-                QgsProject.instance().addMapLayer(outputLayer)
+                #QgsProject.instance().addMapLayer(outputLayer)
                 # Retourne la couche de sortie
                 return outputLayer
 
@@ -335,7 +335,7 @@ class IncendieMontreal:
                 pr.addFeature(feat)
             buffer.updateExtents()
             # Ajout de la couche à Qgis
-            QgsProject.instance().addMapLayer(buffer)
+            #QgsProject.instance().addMapLayer(buffer)
 
         # Fonction pour faire la liste des entités d'une couche qui intersect une couche de buffer
             def entite_intersect_buffer(couche_buffer, couche_vec, attribut_a_garder):
@@ -354,7 +354,10 @@ class IncendieMontreal:
                         if geom_entite.intersects(geom_buff):
                             dic = {}
                             for attribut in attribut_a_garder:
-                                value = entite[attribut]
+                                if attribut == 'GEOMETRY':
+                                    value = geom_entite
+                                else:
+                                    value = entite[attribut]
                                 dic.update({attribut: value})
                             liste_intersect.append(dic)
                 # retourne liste d'entités sous forme de dic avec les attributs voulus de l'entité
@@ -362,7 +365,7 @@ class IncendieMontreal:
 
         # Aller chercher les AD qui sont affectées
             ad_affectee = entite_intersect_buffer(buffer, couche_recens, ['ADIDU'])
-            print(ad_affectee)
+            #print(ad_affectee)
 
         # Aller chercher la population totale affectée dans le CSV en entrée
             import csv
@@ -381,14 +384,55 @@ class IncendieMontreal:
                             # avec son ID au dictionnaire
                             if row['ADidu'] == j:
                                 dic_pop.update({j: int(row['ADpop_2016'])})
-            print(dic_pop)
+            #print(dic_pop)
             # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
             pop_totale = sum(dic_pop.values())
             print('La population totale affectée est de : {} personnes'.format(pop_totale))
 
         # Aller chercher les rues qui sont affectées
-        #     rue_affectee = entite_intersect_buffer(buffer, couche_route, ['ID_TRC', 'CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
-        #     print(rue_affectee)
+            rue_affectee = entite_intersect_buffer(buffer, couche_route, ['CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
+
+        # Aller chercher les adresses affectées
+            adr_affectee = entite_intersect_buffer(buffer, couche_adresse, ['ID_ADRESSE', 'TEXTE','SPECIFIQUE','GENERIQUE', 'GEOMETRY'])
+            #print(adr_affectee)
+
+        # Aller chercher l'adresse la plus proche
+            dis = QgsDistanceArea()
+            # On déclare les entités de la couche du point incident
+            featInc = couche_point.getFeatures()
+            # On parcours les entités de la couche du point incident
+            for pointInc in featInc:
+                # On déclare le geom de l'entité comme un point
+                geomInc = pointInc.geometry().asPoint()
+                # On parcours la liste des adresses affectées
+                for adr in adr_affectee:
+                    # On déclare le geom de l'adresses affectées comme un points
+                    geomAdr = adr['GEOMETRY'].asPoint()
+                    # On calcule la distance entre le point incident et l'adresse affectée
+                    distance = dis.measureLine(geomInc, geomAdr)
+                    # On ajoute la distance comme attribut dans le dictionnaire de l'adresse
+                    adr['DIST'] = distance
+
+            # On tri la liste des adresses affectées selon la distance
+            sort_adr_aff_distance = sorted(adr_affectee, key=lambda i: i['DIST'])
+            # On récupère l'adresse ayant la distance la plus courte
+            adr_plus_proche = sort_adr_aff_distance[0]
+            print("L'adresse la plus proche de l'incident est: {} {} {} à une distance de {} m"
+            .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE'], adr_plus_proche['DIST']))
+
+        # Afficher les informations dans la console
+            liste_rue_unique =[]
+            for rue in rue_affectee:
+                if rue not in liste_rue_unique:
+                    liste_rue_unique.append(rue)
+            sort_rue_aff = sorted(liste_rue_unique, key=lambda i: (i['CLASSE'], i['NOM_VOIE']))
+            print('Les rues affectées sont:')
+            for r in sort_rue_aff:
+                print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+
+
+
+
 
             # 1. Faire le buffer sur la couche point
             # 2. Comptabiliser la population totale

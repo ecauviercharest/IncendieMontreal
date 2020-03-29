@@ -387,14 +387,12 @@ class IncendieMontreal:
             #print(dic_pop)
             # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
             pop_totale = sum(dic_pop.values())
-            print('La population totale affectée est de : {} personnes'.format(pop_totale))
 
         # Aller chercher les rues qui sont affectées
             rue_affectee = entite_intersect_buffer(buffer, couche_route, ['CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
 
         # Aller chercher les adresses affectées
             adr_affectee = entite_intersect_buffer(buffer, couche_adresse, ['ID_ADRESSE', 'TEXTE','SPECIFIQUE','GENERIQUE', 'GEOMETRY'])
-            #print(adr_affectee)
 
         # Aller chercher l'adresse la plus proche
             dis = QgsDistanceArea()
@@ -417,10 +415,13 @@ class IncendieMontreal:
             sort_adr_aff_distance = sorted(adr_affectee, key=lambda i: i['DIST'])
             # On récupère l'adresse ayant la distance la plus courte
             adr_plus_proche = sort_adr_aff_distance[0]
-            print("L'adresse la plus proche de l'incident est: {} {} {} à une distance de {} m"
-            .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE'], adr_plus_proche['DIST']))
+
 
         # Afficher les informations dans la console
+            # Population totale
+            print('La population totale affectée est de : {} personnes'.format(pop_totale))
+
+            # Rues affectées
             liste_rue_unique =[]
             for rue in rue_affectee:
                 if rue not in liste_rue_unique:
@@ -430,7 +431,23 @@ class IncendieMontreal:
             for r in sort_rue_aff:
                 print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
 
+            # Adresse la plus proche de l'incident
+            print("L'adresse la plus proche de l'incident est: {} {} {} à une distance de {} m"
+            .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE'], adr_plus_proche['DIST']))
 
+        # Création du fichier de sortie
+
+
+            count = 0
+            print('Les rues affectées sont:')
+            for r in sort_rue_aff:
+                print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+                for a in adr_affectee:
+                    if a['SPECIFIQUE'] == r['NOM_VOIE'] and a['GENERIQUE'] == r['TYP_VOIE']:
+                        print(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE'])
+                        count += 1
+            print('nombre total adresses: {}'.format(len(adr_affectee)))
+            print('nombre adresses printées: {}'.format(count))
 
 
 

@@ -11,7 +11,6 @@
         copyright            : (C) 2020 by David Ethier et Elizabeth Cauvier Charest
         email                : caue3201@usherbrooke.ca
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -39,7 +38,6 @@ class IncendieMontreal:
 
     def __init__(self, iface):
         """Constructor.
-
         :param iface: An interface instance that will be passed to this class
             which provides the hook by which you can manipulate the QGIS
             application at run time.
@@ -72,12 +70,9 @@ class IncendieMontreal:
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
-
         We implement this ourselves since we do not inherit QObject.
-
         :param message: String for translation.
         :type message: str, QString
-
         :returns: Translated version of message.
         :rtype: QString
         """
@@ -97,39 +92,29 @@ class IncendieMontreal:
         whats_this=None,
         parent=None):
         """Add a toolbar icon to the toolbar.
-
         :param icon_path: Path to the icon for this action. Can be a resource
             path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
         :type icon_path: str
-
         :param text: Text that should be shown in menu items for this action.
         :type text: str
-
         :param callback: Function to be called when the action is triggered.
         :type callback: function
-
         :param enabled_flag: A flag indicating if the action should be enabled
             by default. Defaults to True.
         :type enabled_flag: bool
-
         :param add_to_menu: Flag indicating whether the action should also
             be added to the menu. Defaults to True.
         :type add_to_menu: bool
-
         :param add_to_toolbar: Flag indicating whether the action should also
             be added to the toolbar. Defaults to True.
         :type add_to_toolbar: bool
-
         :param status_tip: Optional text to show in a popup when mouse pointer
             hovers over the action.
         :type status_tip: str
-
         :param parent: Parent widget for the new action. Defaults None.
         :type parent: QWidget
-
         :param whats_this: Optional text to show in the status bar when the
             mouse pointer hovers over the action.
-
         :returns: The action that was created. Note that the action is also
             added to self.actions list.
         :rtype: QAction
@@ -229,6 +214,7 @@ class IncendieMontreal:
         # Populate the comboBox with names of all the loaded layers
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
 
+        # j'ai enlever la boite pour le point d'intéret (remplacé par deux text box)
         # self.dlg.comboBox_point.clear()
         # self.dlg.comboBox_point.addItems([layer.name() for layer in layers])
 
@@ -257,23 +243,15 @@ class IncendieMontreal:
             taille_buffer = self.dlg.lineEdit_buffer.text()
             output_name = self.dlg.Line_sortie.text()
             recens_text = self.dlg.Line_recens_text.text()
-            point_lat = self.dlg.lineEdit_buffer_2.text()
-            point_lon = self.dlg.lineEdit_buffer_3.text()
 
+            point_name = self.dlg.comboBox_point.currentText()
             recens_spat_name = self.dlg.comboBox_recens_spat.currentText()
             adresse_name = self.dlg.comboBox_adresse.currentText()
             route_name = self.dlg.comboBox_route.currentText()
 
-        # Création de la couche du point incident
-            couche_point = QgsVectorLayer('Point?crs=epsg:4326'.format(projEpsg), 'couche_point', 'memory')
-            pointProv = couche_point.dataProvider()
-            feat = QgsFeature()
-            feat.setGeometry(QgsGeometry.fromWkt('Point({} {})'.format(float(point_lon), float(point_lat))))
-            pointProv.addFeature(feat)
-            couche_point.updateExtents()
-
-
             # Couches en assumant qu'elles sont ouvertes dans le projet
+            liste_couche_point = QgsProject.instance().mapLayersByName(point_name)
+            couche_point = liste_couche_point[0]
             liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
             couche_recens = liste_couche_recens[0]
             liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
@@ -325,7 +303,6 @@ class IncendieMontreal:
                 couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
             if couche_point.crs() != projCrs:
                 couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
-                QgsProject.instance().addMapLayer(couche_point)
 
 
         # Buffer sur le point en entrée
@@ -454,25 +431,13 @@ class IncendieMontreal:
             f.write('****************************************************\n')
             f.write('\n')
 
-            # Paramètres en entrée
-            f.write('Latitude: {}°\n'.format(point_lat))
-            f.write('Longitude: {}°\n'.format(point_lon))
-            f.write("Taille de la zone d'analyse: {} m\n".format(int(taille_buffer)))
-            f.write('\n')
-
             # Population totale
-            f.write('Population totale affectée: {} personnes\n'.format(pop_totale))
-            f.write('\n')
-
-            # Adresse la plus proche de l'incident
-            f.write("Adresse la plus proche de l'incident: {} {} {}\n"
-                    .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
-            f.write('Distance: {:.2f} m\n'.format(adr_plus_proche['DIST']))
+            f.write('La population totale affectée est de : {} personnes\n'.format(pop_totale))
             f.write('\n')
 
             # Rues affectées et adresses
             count = 0
-            f.write('Adresses affectées ainsi que leur rue respective:\n')
+            f.write('Les adresses affectées ainsi que leur rue respective sont:\n')
             f.write('\n')
             for r in sort_rue_aff:
                 f.write('NOM: {} TYPE: {}\n'.format(r['NOM_VOIE'],r['TYP_VOIE']))
@@ -482,6 +447,10 @@ class IncendieMontreal:
                         count += 1
                 f.write('\n')
 
+            # Adresse la plus proche de l'incident
+            f.write("L'adresse la plus proche de l'incident est: {} {} {}\n"
+              .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+            f.write('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
             # Fin du document
             f.write('\n')
             f.write('***************************************************\n')

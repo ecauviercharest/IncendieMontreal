@@ -214,7 +214,6 @@ class IncendieMontreal:
         # Populate the comboBox with names of all the loaded layers
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
 
-        # j'ai enlever la boite pour le point d'intéret (remplacé par deux text box)
         # self.dlg.comboBox_point.clear()
         # self.dlg.comboBox_point.addItems([layer.name() for layer in layers])
 
@@ -243,15 +242,23 @@ class IncendieMontreal:
             taille_buffer = self.dlg.lineEdit_buffer.text()
             output_name = self.dlg.Line_sortie.text()
             recens_text = self.dlg.Line_recens_text.text()
+            point_lat = self.dlg.lineEdit_buffer_2.text()
+            point_lon = self.dlg.lineEdit_buffer_3.text()
 
-            point_name = self.dlg.comboBox_point.currentText()
             recens_spat_name = self.dlg.comboBox_recens_spat.currentText()
             adresse_name = self.dlg.comboBox_adresse.currentText()
             route_name = self.dlg.comboBox_route.currentText()
 
+        # Création de la couche du point incident
+            couche_point = QgsVectorLayer('Point?crs=epsg:4326'.format(projEpsg), 'couche_point', 'memory')
+            pointProv = couche_point.dataProvider()
+            feat = QgsFeature()
+            feat.setGeometry(QgsGeometry.fromWkt('Point({} {})'.format(float(point_lon), float(point_lat))))
+            pointProv.addFeature(feat)
+            couche_point.updateExtents()
+
+
             # Couches en assumant qu'elles sont ouvertes dans le projet
-            liste_couche_point = QgsProject.instance().mapLayersByName(point_name)
-            couche_point = liste_couche_point[0]
             liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
             couche_recens = liste_couche_recens[0]
             liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
@@ -303,6 +310,7 @@ class IncendieMontreal:
                 couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
             if couche_point.crs() != projCrs:
                 couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
+                QgsProject.instance().addMapLayer(couche_point)
 
 
         # Buffer sur le point en entrée
@@ -431,13 +439,25 @@ class IncendieMontreal:
             f.write('****************************************************\n')
             f.write('\n')
 
+            # Paramètres en entrée
+            f.write('Latitude: {}°\n'.format(point_lat))
+            f.write('Longitude: {}°\n'.format(point_lon))
+            f.write("Taille de la zone d'analyse: {} m\n".format(int(taille_buffer)))
+            f.write('\n')
+
             # Population totale
-            f.write('La population totale affectée est de : {} personnes\n'.format(pop_totale))
+            f.write('Population totale affectée: {} personnes\n'.format(pop_totale))
+            f.write('\n')
+
+            # Adresse la plus proche de l'incident
+            f.write("Adresse la plus proche de l'incident: {} {} {}\n"
+                    .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+            f.write('Distance: {:.2f} m\n'.format(adr_plus_proche['DIST']))
             f.write('\n')
 
             # Rues affectées et adresses
             count = 0
-            f.write('Les adresses affectées ainsi que leur rue respective sont:\n')
+            f.write('Adresses affectées ainsi que leur rue respective:\n')
             f.write('\n')
             for r in sort_rue_aff:
                 f.write('NOM: {} TYPE: {}\n'.format(r['NOM_VOIE'],r['TYP_VOIE']))
@@ -447,10 +467,6 @@ class IncendieMontreal:
                         count += 1
                 f.write('\n')
 
-            # Adresse la plus proche de l'incident
-            f.write("L'adresse la plus proche de l'incident est: {} {} {}\n"
-              .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
-            f.write('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
             # Fin du document
             f.write('\n')
             f.write('***************************************************\n')

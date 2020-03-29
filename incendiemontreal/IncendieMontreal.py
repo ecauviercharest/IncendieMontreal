@@ -432,22 +432,58 @@ class IncendieMontreal:
                 print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
 
             # Adresse la plus proche de l'incident
-            print("L'adresse la plus proche de l'incident est: {} {} {} à une distance de {} m"
-            .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE'], adr_plus_proche['DIST']))
+            print("L'adresse la plus proche de l'incident est: {} {} {}"
+                    .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+            print('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
 
         # Création du fichier de sortie
+            path_output = r'C:\Users\home\Documents\Documents\Géoinformatique 2\GMQ580_TD2\output.txt'
+            f = open(path_output, 'w')
 
+            f.write('****************************************************\n')
+            f.write("RÉSULTATS DE L'ANALYSE DE L'OUTIL'INCENDIEMONTREAL'\n")
+            f.write('****************************************************\n')
+            f.write('\n')
 
+            # Population totale
+            f.write('La population totale affectée est de : {} personnes\n'.format(pop_totale))
+            f.write('\n')
+
+            # Rues affectées et adresses
             count = 0
-            print('Les rues affectées sont:')
+            f.write('Les adresses affectées ainsi que leur rue respective sont:\n')
+            f.write('\n')
             for r in sort_rue_aff:
-                print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+                f.write('NOM: {} TYPE: {}\n'.format(r['NOM_VOIE'],r['TYP_VOIE']))
                 for a in adr_affectee:
-                    if a['SPECIFIQUE'] == r['NOM_VOIE'] and a['GENERIQUE'] == r['TYP_VOIE']:
-                        print(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE'])
+                    if str(a['SPECIFIQUE']).lower() == str(r['NOM_VOIE']).lower() and str(a['GENERIQUE']).lower() == str(r['TYP_VOIE']).lower():
+                        f.write('{} {} {}\n'.format(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE']))
                         count += 1
-            print('nombre total adresses: {}'.format(len(adr_affectee)))
-            print('nombre adresses printées: {}'.format(count))
+                f.write('\n')
+
+            # Adresse la plus proche de l'incident
+            f.write("L'adresse la plus proche de l'incident est: {} {} {}\n"
+              .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+            f.write('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
+            # Fin du document
+            f.write('\n')
+            f.write('***************************************************\n')
+            f.write('FIN DES RÉSULTATS\n')
+            f.write('***************************************************\n')
+            f.close()
+
+
+
+            # count = 0
+            # print('Les rues affectées sont:')
+            # for r in sort_rue_aff:
+            #     print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+            #     for a in adr_affectee:
+            #         if a['SPECIFIQUE'] == r['NOM_VOIE'] and a['GENERIQUE'] == r['TYP_VOIE']:
+            #             print(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE'])
+            #             count += 1
+            # print('nombre total adresses: {}'.format(len(adr_affectee)))
+            # print('nombre adresses printées: {}'.format(count))
 
 
 

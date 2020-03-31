@@ -504,5 +504,9 @@ class IncendieMontreal:
                     f.write('***************************************************\n')
                     f.close()
 
-                except Exception as error :
-                    QMessageBox.critical(self.dlg, "Erreur dans l'exécution", '{}'.format(error))
+                except ValueError as e:
+                    message = "Il y a un problème avec la valeur d'un ou plusieurs intrants: \n {}".format(e)
+                    QMessageBox.critical(self.dlg, "Erreur de valeur", '{}'.format(message))
+                except TypeError as e:
+                    message = "Il y a un problème avec le type d'un ou plusieurs intrants: \n {}".format(e)
+                    QMessageBox.critical(self.dlg, "Erreur de type", '{}'.format(message))

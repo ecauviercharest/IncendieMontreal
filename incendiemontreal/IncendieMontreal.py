@@ -24,7 +24,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
 from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform, QgsDistanceArea
-import processing
+from PyQt5.QtWidgets import QMessageBox
+import sys
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -207,24 +208,20 @@ class IncendieMontreal:
         self.dlg.toolButton_text.clicked.connect(self.select_recens_text)
 
 
-        # Aller chercher toutes les couches présentement dans le projet
-        layers = QgsProject.instance().layerTreeRoot().children()
-        # Clear the contents of the comboBox from previous runs
+        # Clear les boîtes et lignes d'input
         self.dlg.comboBox_recens_spat.clear()
+        self.dlg.comboBox_adresse.clear()
+        self.dlg.comboBox_route.clear()
+        self.dlg.Line_recens_text.clear()
+        self.dlg.lineEdit_buffer_2.clear()
+        self.dlg.lineEdit_buffer_3.clear()
+
+        # Aller chercher toutes les couches présentement dans le projet pour les faire apparaître dans le menu des box
+        layers = QgsProject.instance().layerTreeRoot().children()
         # Populate the comboBox with names of all the loaded layers
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
-
-        # j'ai enlever la boite pour le point d'intéret (remplacé par deux text box)
-        # self.dlg.comboBox_point.clear()
-        # self.dlg.comboBox_point.addItems([layer.name() for layer in layers])
-
-        self.dlg.comboBox_adresse.clear()
         self.dlg.comboBox_adresse.addItems([layer.name() for layer in layers])
-
-        self.dlg.comboBox_route.clear()
         self.dlg.comboBox_route.addItems([layer.name() for layer in layers])
-
-        self.dlg.Line_recens_text.clear()
 
         # show the dialog
         self.dlg.show()
@@ -250,259 +247,285 @@ class IncendieMontreal:
             adresse_name = self.dlg.comboBox_adresse.currentText()
             route_name = self.dlg.comboBox_route.currentText()
 
-        # Création de la couche du point incident
-            couche_point = QgsVectorLayer('Point?crs=epsg:4326', 'couche_point', 'memory')
-            pointProv = couche_point.dataProvider()
-            feat = QgsFeature()
-            feat.setGeometry(QgsGeometry.fromWkt('Point({} {})'.format(float(point_lon), float(point_lat))))
-            pointProv.addFeature(feat)
-            couche_point.updateExtents()
+            liste_intrants = [taille_buffer, output_name, recens_text, point_lat, point_lon, recens_spat_name,
+                              adresse_name, route_name]
 
-        # Couches en assumant qu'elles sont ouvertes dans le projet
-            liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
-            couche_recens = liste_couche_recens[0]
-            liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
-            couche_adresse = liste_couche_adresse[0]
-            liste_couche_route = QgsProject.instance().mapLayersByName(route_name)
-            couche_route = liste_couche_route[0]
+            def donneesManquantes(liste_intrant):
+                dic_intrants = {'0':"Taille de la zone d'analyse", '1':"Fichier de sortie",
+                                '2': "Fichier de recensement textuel", '3': "Latitude", '4': "Longitude",
+                                '5': "Couche de recensement spatiale", '6': "Couche des adresses",
+                                '7': "Couche du réseau routier"}
 
-        # Reprojection des couches selon le CRS du projet
-            def reprojectToInstanceCrs(couche_vec, type, outCrs, outName):
-                # Définition du CRS de la couche
-                inCrs = couche_vec.crs()
-                # Extraction du code EPSG du CRS du projet
-                outEpsg = str(outCrs).split(':')[2][:-1]
-                # Création d'un objet QgsCoordinateTransform
-                trans = QgsCoordinateTransform(inCrs, outCrs, QgsProject.instance())
-                # Création de la couche de sortie et de son provider
-                outputLayer = QgsVectorLayer('{}?crs=epsg:{}'.format(type, outEpsg), outName, 'memory')
-                pr = outputLayer.dataProvider()
-                # Déclaration des variables contenant les entités et les attributs de la couche en entrée
-                couche_features = couche_vec.getFeatures()
-                couche_fields = couche_vec.fields()
+                listeManquant = []
+                # print('longueur: {}'.format(len(liste_intrants)))
+                print(liste_intrants)
+                for i in range(len(liste_intrants)):
+                    if len(liste_intrants[i]) == 0:
+                        index = i
+                        name = dic_intrants[str(index)]
+                        if name not in listeManquant:
+                            listeManquant.append(name)
+                if len(listeManquant) > 0:
+                    QMessageBox.critical(self.dlg, 'Donnée(s) manquante(s)', '\n'.join(map(str, listeManquant)))
+                    return False
+                return True
 
-                # On copie les attributs de la couche en entrée dans la couche de sortie
-                pr.addAttributes(couche_fields)
-                outputLayer.updateFields()
 
-                # parcours les entité de la couche en entrée
-                for feature in couche_features:
-                    geom = feature.geometry()
-                    # reprojection du geom de l'entité
-                    geom.transform(trans)
-                    # On ajuste le geom de l'entité et on l'ajoute à la couche de sortie
-                    feature.setGeometry(geom)
-                    pr.addFeature(feature)
+            if donneesManquantes(liste_intrants):
 
-                # On met la couche de sortie à niveau
-                outputLayer.updateExtents()
-                # On affiche la couche dans le projet courant QGIS
-                # QgsProject.instance().addMapLayer(outputLayer)
-                # Retourne la couche de sortie
-                return outputLayer
+            # Création de la couche du point incident
+                couche_point = QgsVectorLayer('Point?crs=epsg:4326', 'couche_point', 'memory')
+                pointProv = couche_point.dataProvider()
+                feat = QgsFeature()
+                feat.setGeometry(QgsGeometry.fromWkt('Point({} {})'.format(float(point_lon), float(point_lat))))
+                pointProv.addFeature(feat)
+                couche_point.updateExtents()
 
-            # Pour chaque couche en entrée du plugin, on reprojette si le CRS n'est pas celui du projet courant
-            if couche_recens.crs() != projCrs:
-                couche_recens = reprojectToInstanceCrs(couche_recens, 'Polygon', projCrs, 'recens_reproj')
-            if couche_route.crs() != projCrs:
-                couche_route = reprojectToInstanceCrs(couche_route, 'MultiLineString', projCrs, 'route_reproj')
-            if couche_adresse.crs() != projCrs:
-                couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
-            if couche_point.crs() != projCrs:
-                couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
-                QgsProject.instance().addMapLayer(couche_point)
+            # Couches en assumant qu'elles sont ouvertes dans le projet
+                liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
+                couche_recens = liste_couche_recens[0]
+                liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
+                couche_adresse = liste_couche_adresse[0]
+                liste_couche_route = QgsProject.instance().mapLayersByName(route_name)
+                couche_route = liste_couche_route[0]
 
-        # Buffer sur le point en entrée
-            layer = couche_point
-            feats = layer.getFeatures()
+            # Reprojection des couches selon le CRS du projet
+                def reprojectToInstanceCrs(couche_vec, type, outCrs, outName):
+                    # Définition du CRS de la couche
+                    inCrs = couche_vec.crs()
+                    # Extraction du code EPSG du CRS du projet
+                    outEpsg = str(outCrs).split(':')[2][:-1]
+                    # Création d'un objet QgsCoordinateTransform
+                    trans = QgsCoordinateTransform(inCrs, outCrs, QgsProject.instance())
+                    # Création de la couche de sortie et de son provider
+                    outputLayer = QgsVectorLayer('{}?crs=epsg:{}'.format(type, outEpsg), outName, 'memory')
+                    pr = outputLayer.dataProvider()
+                    # Déclaration des variables contenant les entités et les attributs de la couche en entrée
+                    couche_features = couche_vec.getFeatures()
+                    couche_fields = couche_vec.fields()
 
-            # création de la couche vectorielle
-            buffer = QgsVectorLayer("Polygon?crs=epsg:{}".format(projEpsg), "Zone_incident", "memory")
-            pr = buffer.dataProvider()
+                    # On copie les attributs de la couche en entrée dans la couche de sortie
+                    pr.addAttributes(couche_fields)
+                    outputLayer.updateFields()
 
-            # Création du buffer
-            for feat in feats:
-                geom = feat.geometry()
-                buff = geom.buffer(int(taille_buffer), 5)
-                feat.setGeometry(buff)
-                pr.addFeature(feat)
-            buffer.updateExtents()
+                    # parcours les entité de la couche en entrée
+                    for feature in couche_features:
+                        geom = feature.geometry()
+                        # reprojection du geom de l'entité
+                        geom.transform(trans)
+                        # On ajuste le geom de l'entité et on l'ajoute à la couche de sortie
+                        feature.setGeometry(geom)
+                        pr.addFeature(feature)
 
-            # Ajout de la couche à Qgis
-            # QgsProject.instance().addMapLayer(buffer)
+                    # On met la couche de sortie à niveau
+                    outputLayer.updateExtents()
+                    # On affiche la couche dans le projet courant QGIS
+                    # QgsProject.instance().addMapLayer(outputLayer)
+                    # Retourne la couche de sortie
+                    return outputLayer
 
-        # Fonction pour faire la liste des entités d'une couche qui intersect une couche de buffer
-            def entite_intersect_buffer(couche_buffer, couche_vec, attribut_a_garder):
-                couche = couche_vec
-                # Déclarer les features de la couche de buffer et d'entité
-                buff_feature = couche_buffer.getFeatures()
-                couche_feature = couche.getFeatures()
+                # Pour chaque couche en entrée du plugin, on reprojette si le CRS n'est pas celui du projet courant
+                if couche_recens.crs() != projCrs:
+                    couche_recens = reprojectToInstanceCrs(couche_recens, 'Polygon', projCrs, 'recens_reproj')
+                if couche_route.crs() != projCrs:
+                    couche_route = reprojectToInstanceCrs(couche_route, 'MultiLineString', projCrs, 'route_reproj')
+                if couche_adresse.crs() != projCrs:
+                    couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
+                if couche_point.crs() != projCrs:
+                    couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
+                    #QgsProject.instance().addMapLayer(couche_point)
 
-                liste_intersect = []
-                for buff in buff_feature:
-                    geom_buff = buff.geometry()
-                    # On parcours les entités de la couche vec et on déclare leur géométrie
-                    for entite in couche_feature:
-                        geom_entite = entite.geometry()
-                        # Si l'entite intersect le buffer, ajoute les attributs voulus au dic, ajoute le dic à la liste
-                        if geom_entite.intersects(geom_buff):
-                            dic = {}
-                            for attribut in attribut_a_garder:
-                                if attribut == 'GEOMETRY':
-                                    value = geom_entite
-                                else:
-                                    value = entite[attribut]
-                                dic.update({attribut: value})
-                            liste_intersect.append(dic)
-                # retourne liste d'entités sous forme de dic avec les attributs voulus de l'entité
-                return liste_intersect
+            # Buffer sur le point en entrée
+                layer = couche_point
+                feats = layer.getFeatures()
 
-        # Aller chercher les AD qui sont affectées
-            ad_affectee = entite_intersect_buffer(buffer, couche_recens, ['ADIDU'])
-            # print(ad_affectee)
+                # création de la couche vectorielle
+                buffer = QgsVectorLayer("Polygon?crs=epsg:{}".format(projEpsg), "Zone_incident", "memory")
+                pr = buffer.dataProvider()
 
-        # Aller chercher la population totale affectée dans le CSV en entrée
-            import csv
-            path_csv = r'{}'.format(recens_text)
+                # Création du buffer
+                for feat in feats:
+                    geom = feat.geometry()
+                    buff = geom.buffer(int(taille_buffer), 5)
+                    feat.setGeometry(buff)
+                    pr.addFeature(feat)
+                buffer.updateExtents()
 
-            dic_pop = {}
-            # on ouvre le fichier CSV des AD e spécifiant l'encodage à ISO-8859-1 pour gérer les caractères spéciaux
-            with open(path_csv, encoding='ISO-8859-1') as csv_file:
-                # On crée le reader qui va permettre de parcourir les row comme des dictionnaires
-                csv_reader = csv.DictReader(csv_file)
-                # On parcours chaque row du fichier
-                for row in csv_reader:
-                    for i in ad_affectee:
-                        for j in i.values():
-                            # Si le ID du row égal un ID dans la liste des AD affectées, on ajoute la pop. du row
-                            # avec son ID au dictionnaire
-                            if row['ADidu'] == j:
-                                dic_pop.update({j: int(row['ADpop_2016'])})
-            # print(dic_pop)
-            # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
-            pop_totale = sum(dic_pop.values())
+                # Ajout de la couche à Qgis
+                # QgsProject.instance().addMapLayer(buffer)
 
-        # Aller chercher les rues qui sont affectées
-            rue_affectee = entite_intersect_buffer(buffer, couche_route, ['CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
+            # Fonction pour faire la liste des entités d'une couche qui intersect une couche de buffer
+                def entite_intersect_buffer(couche_buffer, couche_vec, attribut_a_garder):
+                    couche = couche_vec
+                    # Déclarer les features de la couche de buffer et d'entité
+                    buff_feature = couche_buffer.getFeatures()
+                    couche_feature = couche.getFeatures()
 
-        # Aller chercher les adresses affectées
-            adr_affectee = entite_intersect_buffer(buffer, couche_adresse,
-                                                   ['ID_ADRESSE', 'TEXTE', 'SPECIFIQUE', 'GENERIQUE', 'GEOMETRY'])
+                    liste_intersect = []
+                    for buff in buff_feature:
+                        geom_buff = buff.geometry()
+                        # On parcours les entités de la couche vec et on déclare leur géométrie
+                        for entite in couche_feature:
+                            geom_entite = entite.geometry()
+                            # Si l'entite intersect le buffer, ajoute les attributs voulus au dic, ajoute le dic à la liste
+                            if geom_entite.intersects(geom_buff):
+                                dic = {}
+                                for attribut in attribut_a_garder:
+                                    if attribut == 'GEOMETRY':
+                                        value = geom_entite
+                                    else:
+                                        value = entite[attribut]
+                                    dic.update({attribut: value})
+                                liste_intersect.append(dic)
+                    # retourne liste d'entités sous forme de dic avec les attributs voulus de l'entité
+                    return liste_intersect
 
-        # Aller chercher l'adresse la plus proche
-            dis = QgsDistanceArea()
-            # On déclare les entités de la couche du point incident
-            featInc = couche_point.getFeatures()
-            # On parcours les entités de la couche du point incident
-            for pointInc in featInc:
-                # On déclare le geom de l'entité comme un point
-                geomInc = pointInc.geometry().asPoint()
-                # On parcours la liste des adresses affectées
-                for adr in adr_affectee:
-                    # On déclare le geom de l'adresses affectées comme un points
-                    geomAdr = adr['GEOMETRY'].asPoint()
-                    # On calcule la distance entre le point incident et l'adresse affectée
-                    distance = dis.measureLine(geomInc, geomAdr)
-                    # On ajoute la distance comme attribut dans le dictionnaire de l'adresse
-                    adr['DIST'] = distance
+            # Aller chercher les AD qui sont affectées
+                ad_affectee = entite_intersect_buffer(buffer, couche_recens, ['ADIDU'])
+                # print(ad_affectee)
 
-            # On tri la liste des adresses affectées selon la distance
-            sort_adr_aff_distance = sorted(adr_affectee, key=lambda i: i['DIST'])
-            # On récupère l'adresse ayant la distance la plus courte
-            adr_plus_proche = sort_adr_aff_distance[0]
+            # Aller chercher la population totale affectée dans le CSV en entrée
+                import csv
+                path_csv = r'{}'.format(recens_text)
 
-        # Afficher les informations dans la console
-            # Population totale
-            print('La population totale affectée est de : {} personnes'.format(pop_totale))
+                dic_pop = {}
+                # on ouvre le fichier CSV des AD e spécifiant l'encodage à ISO-8859-1 pour gérer les caractères spéciaux
+                with open(path_csv, encoding='ISO-8859-1') as csv_file:
+                    # On crée le reader qui va permettre de parcourir les row comme des dictionnaires
+                    csv_reader = csv.DictReader(csv_file)
+                    # On parcours chaque row du fichier
+                    for row in csv_reader:
+                        for i in ad_affectee:
+                            for j in i.values():
+                                # Si le ID du row égal un ID dans la liste des AD affectées, on ajoute la pop. du row
+                                # avec son ID au dictionnaire
+                                if row['ADidu'] == j:
+                                    dic_pop.update({j: int(row['ADpop_2016'])})
+                # print(dic_pop)
+                # On additionne toutes les populations du dictionnaire pour trouver la pop. totale
+                pop_totale = sum(dic_pop.values())
 
-            # Rues affectées
-            liste_rue_unique = []
-            for rue in rue_affectee:
-                if rue not in liste_rue_unique:
-                    liste_rue_unique.append(rue)
-            sort_rue_aff = sorted(liste_rue_unique, key=lambda i: (i['CLASSE'], i['NOM_VOIE']))
-            print('Les rues affectées sont:')
-            for r in sort_rue_aff:
-                print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+            # Aller chercher les rues qui sont affectées
+                rue_affectee = entite_intersect_buffer(buffer, couche_route, ['CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
 
-            # Adresse la plus proche de l'incident
-            print("L'adresse la plus proche de l'incident est: {} {} {}"
-                  .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
-            print('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
+            # Aller chercher les adresses affectées
+                adr_affectee = entite_intersect_buffer(buffer, couche_adresse,
+                                                       ['ID_ADRESSE', 'TEXTE', 'SPECIFIQUE', 'GENERIQUE', 'GEOMETRY'])
 
-        # Création du fichier de sortie
-            path_output = r'C:\Users\home\Documents\Documents\Géoinformatique 2\GMQ580_TD2\output.txt'
-            f = open(path_output, 'w')
+            # Aller chercher l'adresse la plus proche
+                dis = QgsDistanceArea()
+                # On déclare les entités de la couche du point incident
+                featInc = couche_point.getFeatures()
+                # On parcours les entités de la couche du point incident
+                for pointInc in featInc:
+                    # On déclare le geom de l'entité comme un point
+                    geomInc = pointInc.geometry().asPoint()
+                    # On parcours la liste des adresses affectées
+                    for adr in adr_affectee:
+                        # On déclare le geom de l'adresses affectées comme un points
+                        geomAdr = adr['GEOMETRY'].asPoint()
+                        # On calcule la distance entre le point incident et l'adresse affectée
+                        distance = dis.measureLine(geomInc, geomAdr)
+                        # On ajoute la distance comme attribut dans le dictionnaire de l'adresse
+                        adr['DIST'] = distance
 
-            f.write('****************************************************\n')
-            f.write("RÉSULTATS DE L'ANALYSE DE L'OUTIL'INCENDIEMONTREAL'\n")
-            f.write('****************************************************\n')
-            f.write('\n')
+                # On tri la liste des adresses affectées selon la distance
+                sort_adr_aff_distance = sorted(adr_affectee, key=lambda i: i['DIST'])
+                # On récupère l'adresse ayant la distance la plus courte
+                adr_plus_proche = sort_adr_aff_distance[0]
 
-            # Paramètres en entrée
-            f.write('Latitude: {}°\n'.format(point_lat))
-            f.write('Longitude: {}°\n'.format(point_lon))
-            f.write("Taille de la zone d'analyse: {} m\n".format(int(taille_buffer)))
-            f.write('\n')
+            # Afficher les informations dans la console
+                # Population totale
+                print('La population totale affectée est de : {} personnes'.format(pop_totale))
 
-            # Population totale
-            f.write('La population totale affectée est de : {} personnes\n'.format(pop_totale))
-            f.write('\n')
+                # Rues affectées
+                liste_rue_unique = []
+                for rue in rue_affectee:
+                    if rue not in liste_rue_unique:
+                        liste_rue_unique.append(rue)
+                sort_rue_aff = sorted(liste_rue_unique, key=lambda i: (i['CLASSE'], i['NOM_VOIE']))
+                print('Les rues affectées sont:')
+                for r in sort_rue_aff:
+                    print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
 
-            # Adresse la plus proche de l'incident
-            f.write("L'adresse la plus proche de l'incident est: {} {} {}\n"
-                    .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
-            f.write('Distance: {:.2f} m\n'.format(adr_plus_proche['DIST']))
-            f.write('\n')
+                # Adresse la plus proche de l'incident
+                print("L'adresse la plus proche de l'incident est: {} {} {}"
+                      .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+                print('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
 
-            # Rues affectées et adresses
-            count = 0
-            f.write('Les adresses affectées ainsi que leur rue respective sont:\n')
-            f.write('\n')
-            for r in sort_rue_aff:
-                f.write('NOM: {} TYPE: {}\n'.format(r['NOM_VOIE'], r['TYP_VOIE']))
-                for a in adr_affectee:
-                    if str(a['SPECIFIQUE']).lower() == str(r['NOM_VOIE']).lower() and str(a['GENERIQUE']).lower() == str(
-                            r['TYP_VOIE']).lower():
-                        f.write('{} {} {}\n'.format(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE']))
-                        count += 1
+            # Création du fichier de sortie
+                path_output = r'C:\Users\home\Documents\Documents\Géoinformatique 2\GMQ580_TD2\output.txt'
+                f = open(path_output, 'w')
+
+                f.write('****************************************************\n')
+                f.write("RÉSULTATS DE L'ANALYSE DE L'OUTIL'INCENDIEMONTREAL'\n")
+                f.write('****************************************************\n')
                 f.write('\n')
 
-            # Fin du document
-            f.write('\n')
-            f.write('***************************************************\n')
-            f.write('FIN DES RÉSULTATS\n')
-            f.write('***************************************************\n')
-            f.close()
+                # Paramètres en entrée
+                f.write('Latitude: {}°\n'.format(point_lat))
+                f.write('Longitude: {}°\n'.format(point_lon))
+                f.write("Taille de la zone d'analyse: {} m\n".format(int(taille_buffer)))
+                f.write('\n')
 
-            # count = 0
-            # print('Les rues affectées sont:')
-            # for r in sort_rue_aff:
-            #     print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
-            #     for a in adr_affectee:
-            #         if a['SPECIFIQUE'] == r['NOM_VOIE'] and a['GENERIQUE'] == r['TYP_VOIE']:
-            #             print(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE'])
-            #             count += 1
-            # print('nombre total adresses: {}'.format(len(adr_affectee)))
-            # print('nombre adresses printées: {}'.format(count))
+                # Population totale
+                f.write('La population totale affectée est de : {} personnes\n'.format(pop_totale))
+                f.write('\n')
 
-            # 1. Faire le buffer sur la couche point
-            # 2. Comptabiliser la population totale
-            #   2.1 Faire une requête dans le CSV des AD avec les ID des AD à l'intérieur du buffer
-            #   2.2 Extraire la population, faire le total
-            # 3. Faire la liste des rues affectées
-            #   3.1 Faire une requête dans la couche des rues, ceux qui sont contenues dans le buffer
-            #   3.2 Ajouter les noms de rue à une liste
-            # 4. Faire un dictionnaire des adresses affectées
-            #   4.1 Faire une requête dans la couche des adresses, ceux qui sont contenues dans le buffer
-            #   4.2 Ajouter les adresses comme key au dict.
-            #   4.3 Extraire le nom de la rue et l'ajouter comme valeur au dictionnaire
-            # 5. Formatage du fichier txt en sortie
-            #   - on affiche la population totale affectée en haut du fichier
-            #   - on affiche une rue
-            #   - on affiche toutes les adresses affectées dans la rue
-            # 6. Sauvegarde du fichier dans le répertoire spécifié
+                # Adresse la plus proche de l'incident
+                f.write("L'adresse la plus proche de l'incident est: {} {} {}\n"
+                        .format(adr_plus_proche['TEXTE'], adr_plus_proche['GENERIQUE'], adr_plus_proche['SPECIFIQUE']))
+                f.write('Distance: {:.2f} m\n'.format(adr_plus_proche['DIST']))
+                f.write('\n')
 
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+                # Rues affectées et adresses
+                count = 0
+                f.write('Les adresses affectées ainsi que leur rue respective sont:\n')
+                f.write('\n')
+                for r in sort_rue_aff:
+                    f.write('NOM: {} TYPE: {}\n'.format(r['NOM_VOIE'], r['TYP_VOIE']))
+                    for a in adr_affectee:
+                        if str(a['SPECIFIQUE']).lower() == str(r['NOM_VOIE']).lower() and str(a['GENERIQUE']).lower() == str(
+                                r['TYP_VOIE']).lower():
+                            f.write('{} {} {}\n'.format(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE']))
+                            count += 1
+                    f.write('\n')
+
+                # Fin du document
+                f.write('\n')
+                f.write('***************************************************\n')
+                f.write('FIN DES RÉSULTATS\n')
+                f.write('***************************************************\n')
+                f.close()
+
+                # count = 0
+                # print('Les rues affectées sont:')
+                # for r in sort_rue_aff:
+                #     print('nom: {}'.format(r['NOM_VOIE']), 'Type: {}'.format(r['TYP_VOIE']))
+                #     for a in adr_affectee:
+                #         if a['SPECIFIQUE'] == r['NOM_VOIE'] and a['GENERIQUE'] == r['TYP_VOIE']:
+                #             print(a['TEXTE'], a['GENERIQUE'], a['SPECIFIQUE'])
+                #             count += 1
+                # print('nombre total adresses: {}'.format(len(adr_affectee)))
+                # print('nombre adresses printées: {}'.format(count))
+
+                # 1. Faire le buffer sur la couche point
+                # 2. Comptabiliser la population totale
+                #   2.1 Faire une requête dans le CSV des AD avec les ID des AD à l'intérieur du buffer
+                #   2.2 Extraire la population, faire le total
+                # 3. Faire la liste des rues affectées
+                #   3.1 Faire une requête dans la couche des rues, ceux qui sont contenues dans le buffer
+                #   3.2 Ajouter les noms de rue à une liste
+                # 4. Faire un dictionnaire des adresses affectées
+                #   4.1 Faire une requête dans la couche des adresses, ceux qui sont contenues dans le buffer
+                #   4.2 Ajouter les adresses comme key au dict.
+                #   4.3 Extraire le nom de la rue et l'ajouter comme valeur au dictionnaire
+                # 5. Formatage du fichier txt en sortie
+                #   - on affiche la population totale affectée en haut du fichier
+                #   - on affiche une rue
+                #   - on affiche toutes les adresses affectées dans la rue
+                # 6. Sauvegarde du fichier dans le répertoire spécifié
+
+                # Do something useful here - delete the line containing pass and
+                # substitute with your code.
+                pass

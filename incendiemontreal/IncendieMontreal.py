@@ -227,7 +227,6 @@ class IncendieMontreal:
 
             # On appelle la fonction de chargement de fichier pour tous les intrants si le bouton est cliqué
             self.dlg.toolButton_spat.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='recensSpat'))
-            self.dlg.toolButton_spat.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='recensSpat'))
             self.dlg.toolButton_route.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='route'))
             self.dlg.toolButton_addresse.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='adresse'))
             self.dlg.toolButton_text.clicked.connect(lambda: self.chargerFichier(type='csv', intrant='recensText'))
@@ -279,7 +278,6 @@ class IncendieMontreal:
 
             liste_intrants = [taille_buffer, output_name, recens_text, point_lat, point_lon, recens_spat_name,
                               adresse_name, route_name]
-            print(liste_intrants)
 
             # Fonction pour détecter les données manquantes et afficher un message conséquent à l'utilisateur
             def donneesManquantes(liste_intrant):

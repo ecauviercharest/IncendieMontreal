@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>619</width>
-    <height>339</height>
+    <height>351</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,9 +16,9 @@
   <widget class="QDialogButtonBox" name="button_box_OK_ANNUL">
    <property name="geometry">
     <rect>
-     <x>400</x>
+     <x>350</x>
      <y>300</y>
-     <width>171</width>
+     <width>191</width>
      <height>32</height>
     </rect>
    </property>
@@ -34,7 +34,7 @@
     <rect>
      <x>30</x>
      <y>40</y>
-     <width>301</width>
+     <width>261</width>
      <height>22</height>
     </rect>
    </property>
@@ -49,7 +49,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Recensement (spatial)</string>
+    <string>Recensement (.shp)</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_text">
@@ -62,7 +62,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Recensement (textuel)</string>
+    <string>Recensement (.csv)</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_route">
@@ -94,9 +94,9 @@
   <widget class="QProgressBar" name="progressBar">
    <property name="geometry">
     <rect>
-     <x>390</x>
+     <x>340</x>
      <y>270</y>
-     <width>221</width>
+     <width>271</width>
      <height>23</height>
     </rect>
    </property>
@@ -104,22 +104,12 @@
     <number>24</number>
    </property>
   </widget>
-  <widget class="QLineEdit" name="Line_recens_text">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>80</y>
-     <width>301</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QComboBox" name="comboBox_route">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>120</y>
-     <width>301</width>
+     <width>261</width>
      <height>22</height>
     </rect>
    </property>
@@ -129,7 +119,7 @@
     <rect>
      <x>30</x>
      <y>160</y>
-     <width>301</width>
+     <width>261</width>
      <height>22</height>
     </rect>
    </property>
@@ -139,12 +129,12 @@
     <rect>
      <x>10</x>
      <y>270</y>
-     <width>371</width>
-     <height>61</height>
+     <width>321</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="title">
-    <string>Fichiers de sortie</string>
+    <string/>
    </property>
    <widget class="QLabel" name="label_dossier">
     <property name="geometry">
@@ -156,15 +146,15 @@
      </rect>
     </property>
     <property name="text">
-     <string>Dossier</string>
+     <string>Fichier de sortie (.txt)</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="Line_sortie">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>30</y>
-      <width>301</width>
+      <y>40</y>
+      <width>261</width>
       <height>22</height>
      </rect>
     </property>
@@ -172,8 +162,8 @@
    <widget class="QToolButton" name="toolButton_sortie">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>30</y>
+      <x>290</x>
+      <y>40</y>
       <width>31</width>
       <height>21</height>
      </rect>
@@ -188,17 +178,17 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>371</width>
-     <height>251</height>
+     <width>321</width>
+     <height>241</height>
     </rect>
    </property>
    <property name="title">
-    <string>Fichiers en entrée</string>
+    <string/>
    </property>
    <widget class="QToolButton" name="toolButton_spat">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>290</x>
       <y>30</y>
       <width>31</width>
       <height>21</height>
@@ -211,7 +201,7 @@
    <widget class="QToolButton" name="toolButton_text">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>290</x>
       <y>70</y>
       <width>31</width>
       <height>21</height>
@@ -224,7 +214,7 @@
    <widget class="QToolButton" name="toolButton_route">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>290</x>
       <y>110</y>
       <width>31</width>
       <height>21</height>
@@ -237,7 +227,7 @@
    <widget class="QToolButton" name="toolButton_addresse">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>290</x>
       <y>150</y>
       <width>31</width>
       <height>21</height>
@@ -250,7 +240,7 @@
    <widget class="QLineEdit" name="lineEdit_buffer">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>220</x>
       <y>220</y>
       <width>61</width>
       <height>20</height>
@@ -299,7 +289,7 @@
    <widget class="QLineEdit" name="lineEdit_buffer_2">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>70</x>
       <y>190</y>
       <width>61</width>
       <height>20</height>
@@ -322,7 +312,7 @@
    <widget class="QLineEdit" name="lineEdit_buffer_3">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>220</x>
       <y>190</y>
       <width>61</width>
       <height>20</height>
@@ -332,13 +322,23 @@
      <string/>
     </property>
    </widget>
+   <widget class="QLineEdit" name="Line_recens_text">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>70</y>
+      <width>261</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QTextBrowser" name="textBrowser">
    <property name="geometry">
     <rect>
-     <x>390</x>
+     <x>340</x>
      <y>20</y>
-     <width>221</width>
+     <width>271</width>
      <height>241</height>
     </rect>
    </property>
@@ -347,15 +347,21 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:600; color:#aa0000;&quot;&gt;Incendie&lt;/span&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt; &lt;/span&gt;&lt;span style=&quot; font-size:16pt; font-weight:600;&quot;&gt;Montréal&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Ce plugin créé dans le cadre du cours Géo-Informatique II de l'Université de Sherbrooke aide la ville de Montréal à se préparer en cas d'incendie. &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Il requiert 4 fichiers en entrée (.shp, .txt) et la taille du buffer (en mètre). &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-weight:600;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:600; color:#aa0000;&quot;&gt;Incendie&lt;/span&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt; &lt;/span&gt;&lt;span style=&quot; font-size:16pt; font-weight:600;&quot;&gt;Montréal&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic;&quot;&gt;Ce plugin créé dans le cadre du cours Géo-Informatique II de l'Université de Sherbrooke aide la ville de Montréal à se préparer en cas d'incendie. &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-style:italic;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;À partir d'une latitude, d'une longitude et d'un rayon d'analyse (en mètre), l'outil extrait les adresses, les rues ainsi que le nombre de personnes touchées par un incendie. Les résultats sont enregistrés dans un fichier .txt&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-weight:600;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Intrants:&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Recensement (.shp)&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; : Aires de diffusion du recensement fédéral&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Recensement (.csv) &lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;: Population des aires de diffusion&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Réseau routier (.shp)&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; : Réseau routier de la ville de Montréal &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Adresses (.shp)&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; : Adresses de la ville de Montréal &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Latitude, longitude (° décimaux)&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt; : point d'intérêt &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; text-decoration: underline;&quot;&gt;Rayon de la zone d'analyse (m)&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <zorder>Line_recens_text</zorder>
   <zorder>groupBox_2</zorder>
   <zorder>label_adresse</zorder>
   <zorder>label_spat</zorder>

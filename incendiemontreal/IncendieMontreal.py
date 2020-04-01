@@ -323,13 +323,24 @@ class IncendieMontreal:
                     pointProv.addFeature(feat)
                     couche_point.updateExtents()
 
-                # Couches en assumant qu'elles sont ouvertes dans le projet
-                    liste_couche_recens = QgsProject.instance().mapLayersByName(recens_spat_name)
-                    couche_recens = liste_couche_recens[0]
-                    liste_couche_adresse = QgsProject.instance().mapLayersByName(adresse_name)
-                    couche_adresse = liste_couche_adresse[0]
-                    liste_couche_route = QgsProject.instance().mapLayersByName(route_name)
-                    couche_route = liste_couche_route[0]
+                # Chercher les couches dans les comboBox (peuvent être une couche active ou un path vers fichier)
+
+                    def chercherCoucheActiveOuFichier(name_couche):
+                        # on vérifie si le nom de couche en entrée est une couche active ou non
+                        listeCouche = QgsProject.instance().mapLayersByName(name_couche)
+                        if len(listeCouche) > 0:
+                            # Si oui on utilise cette couche pour les traitement
+                            couche = listeCouche[0]
+                        else:
+                            # Sinon, on va chercher la couche au chemin en entrée
+                            path = r'{}'.format(name_couche)
+                            couche = QgsVectorLayer(path, "AD layer", "ogr")
+                        # Retourne un objet
+                        return couche
+
+                    couche_recens = chercherCoucheActiveOuFichier(recens_spat_name)
+                    couche_adresse = chercherCoucheActiveOuFichier(adresse_name)
+                    couche_route = chercherCoucheActiveOuFichier(route_name)
 
                 # Reprojection des couches selon le CRS du projet
                     def reprojectToInstanceCrs(couche_vec, type, outCrs, outName):

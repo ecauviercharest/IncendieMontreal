@@ -183,12 +183,14 @@ class IncendieMontreal:
     #     filename, _filter = QFileDialog.getOpenFileName(
     #         self.dlg, "Select CSV file ", "", '*.csv')
     #     self.dlg.Line_recens_text.setText(filename)
-    #
-    #
-    # def select_output_file(self):
-    #     filename, _filter = QFileDialog.getSaveFileName(
-    #         self.dlg, "Select   output file ", "", '*.txt')
-    #     self.dlg.line_sortie.setText(filename)
+
+    def select_output_file(self):
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "QFileDialog.getSaveFileNames()", "", "*.txt", options=options)
+        self.dlg.Line_sortie.setText(file)
 
     def chargerFichier(self, type, intrant):
 
@@ -211,8 +213,6 @@ class IncendieMontreal:
                 self.dlg.comboBox_adresse.setCurrentIndex(index)
             elif intrant == 'recensText':
                 self.dlg.Line_recens_text.setText(file)
-            elif intrant == 'output':
-                self.dlg.Line_sortie.setText(file)
 
 
 
@@ -230,7 +230,7 @@ class IncendieMontreal:
             self.dlg.toolButton_route.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='route'))
             self.dlg.toolButton_addresse.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='adresse'))
             self.dlg.toolButton_text.clicked.connect(lambda: self.chargerFichier(type='csv', intrant='recensText'))
-            self.dlg.toolButton_sortie.clicked.connect(lambda: self.chargerFichier(type='txt', intrant='output'))
+            self.dlg.toolButton_sortie.clicked.connect(self.select_output_file)
 
 
         #Clear les boîtes et lignes d'input
@@ -304,8 +304,15 @@ class IncendieMontreal:
                 # Sinon retourne vrai
                 return True
 
+            def verifierOutput(chemin):
+                path = r'{}'.format(chemin)
+                if os.path.exists(path):
+                    QMessageBox.critical(self.dlg, 'Fichier de sortie incorrect', 'Le fichier {} existe déjà'.format(output_name))
+                    return False
+                return True
+
             # Si tous les intrants sont présents, on essaie d'effectuer les traitements, sinon on affiche un message d'erreur.
-            if donneesManquantes(liste_intrants):
+            if donneesManquantes(liste_intrants) and verifierOutput(output_name):
                 try:
 
                 # Création de la couche du point incident
@@ -489,8 +496,7 @@ class IncendieMontreal:
                     print('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
 
                 # Création du fichier de sortie
-                    path_output = r'C:\Users\home\Documents\Documents\Géoinformatique 2\GMQ580_TD2\output.txt'
-                    f = open(path_output, 'w')
+                    f = open(r'{}'.format(output_name), 'w')
 
                     f.write('****************************************************\n')
                     f.write("RÉSULTATS DE L'ANALYSE DE L'OUTIL'INCENDIEMONTREAL'\n")

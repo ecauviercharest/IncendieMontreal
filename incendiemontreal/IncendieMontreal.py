@@ -167,28 +167,53 @@ class IncendieMontreal:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    #
+    # def select_input_file(self):
+    #     filename, _filter = QFileDialog.getOpenFileName(
+    #         self.dlg, "Select input file ", "", '*.shp')
+    #     # Add the selected filename to combobox
+    #     self.dlg.comboBox_recens_spat.addItem(filename)
+    #     # Obtain index of newly-added item
+    #     index = self.dlg.comboBox_recens_spat.findText(filename)
+    #     # Set the combobox to select the new item
+    #     self.dlg.comboBox_recens_spat.setCurrentIndex(index)
+    #
+    #
+    # def select_recens_text(self):
+    #     filename, _filter = QFileDialog.getOpenFileName(
+    #         self.dlg, "Select CSV file ", "", '*.csv')
+    #     self.dlg.Line_recens_text.setText(filename)
+    #
+    #
+    # def select_output_file(self):
+    #     filename, _filter = QFileDialog.getSaveFileName(
+    #         self.dlg, "Select   output file ", "", '*.txt')
+    #     self.dlg.line_sortie.setText(filename)
 
-    def select_input_file(self):
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select input file ", "", '*.shp')
-        # Add the selected filename to combobox
-        self.dlg.comboBox_recens_spat.addItem(filename)
-        # Obtain index of newly-added item
-        index = self.dlg.comboBox_recens_spat.findText(filename)
-        # Set the combobox to select the new item
-        self.dlg.comboBox_recens_spat.setCurrentIndex(index)
+    def chargerFichier(self, type, intrant):
 
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "QFileDialog.getOpenFileNames()", "", "*.{}".format(type), options=options)
+        if file:
+            if intrant == 'recensSpat':
+                self.dlg.comboBox_recens_spat.addItem(file)
+                index = self.dlg.comboBox_recens_spat.findText(file)
+                self.dlg.comboBox_recens_spat.setCurrentIndex(index)
+            elif intrant == 'route':
+                self.dlg.comboBox_route.addItem(file)
+                index = self.dlg.comboBox_route.findText(file)
+                self.dlg.comboBox_route.setCurrentIndex(index)
+            elif intrant == 'adresse':
+                self.dlg.comboBox_adresse.addItem(file)
+                index = self.dlg.comboBox_adresse.findText(file)
+                self.dlg.comboBox_adresse.setCurrentIndex(index)
+            elif intrant == 'recensText':
+                self.dlg.Line_recens_text.setText(file)
+            elif intrant == 'output':
+                self.dlg.Line_sortie.setText(file)
 
-    def select_recens_text(self):
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select CSV file ", "", '*.csv')
-        self.dlg.Line_recens_text.setText(filename)
-
-
-    def select_output_file(self):
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select   output file ", "", '*.txt')
-        self.dlg.line_sortie.setText(filename)
 
 
     def run(self):
@@ -200,21 +225,25 @@ class IncendieMontreal:
             self.first_start = False
             self.dlg = IncendieMontrealDialog()
 
-        # On appelle la fonction select_input_file si le bouton toolButton_spat est cliqué
-        self.dlg.toolButton_spat.clicked.connect(self.select_input_file)
-        # On appelle la fonction select_output_file si le bouton toolButton_sortie est cliqué
-        self.dlg.toolButton_sortie.clicked.connect(self.select_output_file)
-        # On appelle la fonction select_recens_text si le bouton toolButton_text est cliqué
-        self.dlg.toolButton_text.clicked.connect(self.select_recens_text)
+            # On appelle la fonction de chargement de fichier pour tous les intrants si le bouton est cliqué
+            self.dlg.toolButton_spat.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='recensSpat'))
+            self.dlg.toolButton_spat.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='recensSpat'))
+            self.dlg.toolButton_route.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='route'))
+            self.dlg.toolButton_addresse.clicked.connect(lambda: self.chargerFichier(type='shp', intrant='adresse'))
+            self.dlg.toolButton_text.clicked.connect(lambda: self.chargerFichier(type='csv', intrant='recensText'))
+            self.dlg.toolButton_sortie.clicked.connect(lambda: self.chargerFichier(type='txt', intrant='output'))
 
 
-        # Clear les boîtes et lignes d'input
+        #Clear les boîtes et lignes d'input
         self.dlg.comboBox_recens_spat.clear()
         self.dlg.comboBox_adresse.clear()
         self.dlg.comboBox_route.clear()
         self.dlg.Line_recens_text.clear()
+        self.dlg.lineEdit_buffer.clear()
         self.dlg.lineEdit_buffer_2.clear()
         self.dlg.lineEdit_buffer_3.clear()
+        self.dlg.Line_sortie.clear()
+
 
         # Aller chercher toutes les couches présentement dans le projet pour les faire apparaître dans le menu des box
         layers = QgsProject.instance().layerTreeRoot().children()
@@ -228,8 +257,8 @@ class IncendieMontreal:
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
-        if result:
 
+        if result:
         # Récupération des informations générales du projet
 
             projCrs = QgsProject.instance().crs()
@@ -247,8 +276,10 @@ class IncendieMontreal:
             adresse_name = self.dlg.comboBox_adresse.currentText()
             route_name = self.dlg.comboBox_route.currentText()
 
+
             liste_intrants = [taille_buffer, output_name, recens_text, point_lat, point_lon, recens_spat_name,
                               adresse_name, route_name]
+            print(liste_intrants)
 
             # Fonction pour détecter les données manquantes et afficher un message conséquent à l'utilisateur
             def donneesManquantes(liste_intrant):

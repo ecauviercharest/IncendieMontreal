@@ -23,7 +23,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform, QgsDistanceArea
+from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform, QgsDistanceArea, QgsMessageLog, Qgis
 from PyQt5.QtWidgets import QMessageBox
 import sys
 
@@ -200,18 +200,22 @@ class IncendieMontreal:
             self.dlg, "QFileDialog.getOpenFileNames()", "", "*.{}".format(type), options=options)
         if file:
             if intrant == 'recensSpat':
+                QgsMessageLog.logMessage('Couche de recensement: {}'.format(file), 'IncendieMontreal', level=Qgis.Info)
                 self.dlg.comboBox_recens_spat.addItem(file)
                 index = self.dlg.comboBox_recens_spat.findText(file)
                 self.dlg.comboBox_recens_spat.setCurrentIndex(index)
             elif intrant == 'route':
+                QgsMessageLog.logMessage('Couche de routes: {}'.format(file),'IncendieMontreal', level=Qgis.Info)
                 self.dlg.comboBox_route.addItem(file)
                 index = self.dlg.comboBox_route.findText(file)
                 self.dlg.comboBox_route.setCurrentIndex(index)
             elif intrant == 'adresse':
+                QgsMessageLog.logMessage('Couche des adresses: {}'.format(file),'IncendieMontreal', level=Qgis.Info)
                 self.dlg.comboBox_adresse.addItem(file)
                 index = self.dlg.comboBox_adresse.findText(file)
                 self.dlg.comboBox_adresse.setCurrentIndex(index)
             elif intrant == 'recensText':
+                QgsMessageLog.logMessage('CSV de recensement: {}'.format(file),'IncendieMontreal', level=Qgis.Info)
                 self.dlg.Line_recens_text.setText(file)
 
 
@@ -300,6 +304,8 @@ class IncendieMontreal:
                 # Si la liste des intrants manquants n'est pas vide, on affiche un message des intrants manquants et retourne False
                 if len(listeManquant) > 0:
                     QMessageBox.critical(self.dlg, 'Donnée(s) manquante(s)', '\n'.join(map(str, listeManquant)))
+                    QgsMessageLog.logMessage('Donnée(s) manquante(s): ' + ', '.join(map(str, listeManquant)),
+                                             'IncendieMontreal', level=Qgis.Info)
                     return False
                 # Sinon retourne vrai
                 return True
@@ -307,7 +313,11 @@ class IncendieMontreal:
             def verifierOutput(chemin):
                 path = r'{}'.format(chemin)
                 if os.path.exists(path):
-                    QMessageBox.critical(self.dlg, 'Fichier de sortie incorrect', 'Le fichier {} existe déjà'.format(output_name))
+                    QMessageBox.critical(self.dlg, 'Fichier de sortie incorrect',
+                                         'Le fichier {} existe déjà'.format(output_name))
+                    QgsMessageLog.logMessage('Fichier de sortie incorrect: ' + 'Le fichier {} existe déjà'.format(output_name),
+                                             'IncendieMontreal', level=Qgis.Info)
+
                     return False
                 return True
 
@@ -378,6 +388,11 @@ class IncendieMontreal:
                         return outputLayer
 
                     # Pour chaque couche en entrée du plugin, on reprojette si le CRS n'est pas celui du projet courant
+
+                    QgsMessageLog.logMessage(
+                        'Reprojection des couches au SRC du projet courant...',
+                        'IncendieMontreal', level=Qgis.Info)
+
                     if couche_recens.crs() != projCrs:
                         couche_recens = reprojectToInstanceCrs(couche_recens, 'Polygon', projCrs, 'recens_reproj')
                     if couche_route.crs() != projCrs:
@@ -389,6 +404,11 @@ class IncendieMontreal:
                         #QgsProject.instance().addMapLayer(couche_point)
 
                 # Buffer sur le point en entrée
+
+                    QgsMessageLog.logMessage(
+                        "Création de la zone d'analyse...",
+                        'IncendieMontreal', level=Qgis.Info)
+
                     layer = couche_point
                     feats = layer.getFeatures()
 
@@ -434,10 +454,17 @@ class IncendieMontreal:
                         return liste_intersect
 
                 # Aller chercher les AD qui sont affectées
+                    QgsMessageLog.logMessage(
+                        'Identification des AD affectées...',
+                        'IncendieMontreal', level=Qgis.Info)
+
                     ad_affectee = entite_intersect_buffer(buffer, couche_recens, ['ADIDU'])
                     # print(ad_affectee)
 
                 # Aller chercher la population totale affectée dans le CSV en entrée
+                    QgsMessageLog.logMessage(
+                        'Identification de la population totale affectée...',
+                        'IncendieMontreal', level=Qgis.Info)
                     import csv
                     path_csv = r'{}'.format(recens_text)
 
@@ -459,13 +486,22 @@ class IncendieMontreal:
                     pop_totale = sum(dic_pop.values())
 
                 # Aller chercher les rues qui sont affectées
+                    QgsMessageLog.logMessage(
+                        'Identification des rues affectées..',
+                        'IncendieMontreal', level=Qgis.Info)
                     rue_affectee = entite_intersect_buffer(buffer, couche_route, ['CLASSE', 'TYP_VOIE', 'NOM_VOIE'])
 
                 # Aller chercher les adresses affectées
+                    QgsMessageLog.logMessage(
+                        'Identification des adresses affectées...',
+                        'IncendieMontreal', level=Qgis.Info)
                     adr_affectee = entite_intersect_buffer(buffer, couche_adresse,
                                                            ['ID_ADRESSE', 'TEXTE', 'SPECIFIQUE', 'GENERIQUE', 'GEOMETRY'])
 
                 # Aller chercher l'adresse la plus proche
+                    QgsMessageLog.logMessage(
+                        "Identification de l'adresse la plus proche...",
+                        'IncendieMontreal', level=Qgis.Info)
                     dis = QgsDistanceArea()
                     # On déclare les entités de la couche du point incident
                     featInc = couche_point.getFeatures()
@@ -507,6 +543,9 @@ class IncendieMontreal:
                     print('Distance: {:.2f} m'.format(adr_plus_proche['DIST']))
 
                 # Création du fichier de sortie
+                    QgsMessageLog.logMessage(
+                        "Création du fichier de sortie {} ...".format(output_name),
+                        'IncendieMontreal', level=Qgis.Info)
                     f = open(r'{}'.format(output_name), 'w')
 
                     f.write('****************************************************\n')
@@ -550,9 +589,13 @@ class IncendieMontreal:
                     f.write('***************************************************\n')
                     f.close()
 
+                    QgsMessageLog.logMessage('Terminé', 'IncendieMontreal', level=Qgis.Info)
+
                 except ValueError as e:
                     message = "Il y a un problème avec la valeur d'un ou plusieurs intrants: \n {}".format(e)
                     QMessageBox.critical(self.dlg, "Erreur de valeur", '{}'.format(message))
+                    QgsMessageLog.logMessage(message,'IncendieMontreal', level=Qgis.Info)
                 except TypeError as e:
                     message = "Il y a un problème avec le type d'un ou plusieurs intrants: \n {}".format(e)
                     QMessageBox.critical(self.dlg, "Erreur de type", '{}'.format(message))
+                    QgsMessageLog.logMessage(message,'IncendieMontreal', level=Qgis.Info)

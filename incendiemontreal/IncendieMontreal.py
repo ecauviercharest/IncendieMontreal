@@ -9,7 +9,7 @@
         begin                : 2020-03-16
         git sha              : $Format:%H$
         copyright            : (C) 2020 by David Ethier et Elizabeth Cauvier Charest
-        email                : caue3201@usherbrooke.ca
+        email                : ethd2002@usherbrooke.ca; caue3201@usherbrooke.ca
  ***************************************************************************/
 /***************************************************************************
  *                                                                         *
@@ -25,7 +25,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
 from qgis.core import QgsGeometry, QgsVectorLayer, QgsField, QgsFeature, QgsProject, QgsVectorFileWriter, QgsWkbTypes, QgsCoordinateTransform, QgsDistanceArea, QgsMessageLog, Qgis
 from PyQt5.QtWidgets import QMessageBox
-import sys
+
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -167,24 +167,12 @@ class IncendieMontreal:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    #
-    # def select_input_file(self):
-    #     filename, _filter = QFileDialog.getOpenFileName(
-    #         self.dlg, "Select input file ", "", '*.shp')
-    #     # Add the selected filename to combobox
-    #     self.dlg.comboBox_recens_spat.addItem(filename)
-    #     # Obtain index of newly-added item
-    #     index = self.dlg.comboBox_recens_spat.findText(filename)
-    #     # Set the combobox to select the new item
-    #     self.dlg.comboBox_recens_spat.setCurrentIndex(index)
-    #
-    #
-    # def select_recens_text(self):
-    #     filename, _filter = QFileDialog.getOpenFileName(
-    #         self.dlg, "Select CSV file ", "", '*.csv')
-    #     self.dlg.Line_recens_text.setText(filename)
 
     def select_output_file(self):
+        '''
+        Permet de choisir un fichier de sortie (.txt). Le chemin du fichier s'affiche dans la ligne correspondante
+        Appelée quand l'utilisateur clique sur le bouton de sélection du fichier de sortie
+        '''
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -193,6 +181,12 @@ class IncendieMontreal:
         self.dlg.Line_sortie.setText(file)
 
     def chargerFichier(self, type, intrant):
+        '''
+        Fonction qui permet de sélectionner d'ouvrir un browser et de sélectionner un fichier sur l'odinateur
+        En fonction de l'intrant et de son type (.shp, .csv) en entrée, le chemin du fichier choisi s'affiche sur
+        la ligne correspondante.
+        Appelée lorsque l'utilisateur clique sur un bouton de sélection d'intrant
+        '''
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -250,7 +244,7 @@ class IncendieMontreal:
 
         # Aller chercher toutes les couches présentement dans le projet pour les faire apparaître dans le menu des box
         layers = QgsProject.instance().layerTreeRoot().children()
-        # Populate the comboBox with names of all the loaded layers
+        # Ajouter les couches actives dans la liste des couches possibles à sélectionner
         self.dlg.comboBox_recens_spat.addItems([layer.name() for layer in layers])
         self.dlg.comboBox_adresse.addItems([layer.name() for layer in layers])
         self.dlg.comboBox_route.addItems([layer.name() for layer in layers])
@@ -293,9 +287,9 @@ class IncendieMontreal:
 
                 listeManquant = []
                 # on parcours la liste des intrants
-                for i in range(len(liste_intrants)):
+                for i in range(len(liste_intrant)):
                     # Si la valeur de l'intrant est nulle, on va chercher son nom. dans le dictionnaire
-                    if len(liste_intrants[i]) == 0:
+                    if len(liste_intrant[i]) == 0:
                         index = i
                         name = dic_intrants[str(index)]
                         # Si le nom n'est pas déjà dans la liste des intrants manquants, on l'ajoute
@@ -303,6 +297,7 @@ class IncendieMontreal:
                             listeManquant.append(name)
                 # Si la liste des intrants manquants n'est pas vide, on affiche un message des intrants manquants et retourne False
                 if len(listeManquant) > 0:
+                    # Affiche un message d'erreur et ajoute le message au log
                     QMessageBox.critical(self.dlg, 'Donnée(s) manquante(s)', '\n'.join(map(str, listeManquant)))
                     QgsMessageLog.logMessage('Donnée(s) manquante(s): ' + ', '.join(map(str, listeManquant)),
                                              'IncendieMontreal', level=Qgis.Info)
@@ -310,19 +305,10 @@ class IncendieMontreal:
                 # Sinon retourne vrai
                 return True
 
-            def verifierOutput(chemin):
-                path = r'{}'.format(chemin)
-                if os.path.exists(path):
-                    QMessageBox.critical(self.dlg, 'Fichier de sortie incorrect',
-                                         'Le fichier {} existe déjà'.format(output_name))
-                    QgsMessageLog.logMessage('Fichier de sortie incorrect: ' + 'Le fichier {} existe déjà'.format(output_name),
-                                             'IncendieMontreal', level=Qgis.Info)
 
-                    return False
-                return True
 
             # Si tous les intrants sont présents, on essaie d'effectuer les traitements, sinon on affiche un message d'erreur.
-            if donneesManquantes(liste_intrants) and verifierOutput(output_name):
+            if donneesManquantes(liste_intrants):
                 try:
 
                 # Création de la couche du point incident
@@ -401,7 +387,6 @@ class IncendieMontreal:
                         couche_adresse = reprojectToInstanceCrs(couche_adresse, 'Point', projCrs, 'adresse_reproj')
                     if couche_point.crs() != projCrs:
                         couche_point = reprojectToInstanceCrs(couche_point, 'Point', projCrs, 'point_reproj')
-                        #QgsProject.instance().addMapLayer(couche_point)
 
                 # Buffer sur le point en entrée
 
@@ -423,9 +408,6 @@ class IncendieMontreal:
                         feat.setGeometry(buff)
                         pr.addFeature(feat)
                     buffer.updateExtents()
-
-                    # Ajout de la couche à Qgis
-                    # QgsProject.instance().addMapLayer(buffer)
 
                 # Fonction pour faire la liste des entités d'une couche qui intersect une couche de buffer
                     def entite_intersect_buffer(couche_buffer, couche_vec, attribut_a_garder):
